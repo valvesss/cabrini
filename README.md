@@ -1,2 +1,2 @@
 # fatec
-find ways to enable competition
+fast as technology
