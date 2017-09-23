@@ -1,2 +1,2 @@
 # fatec
-Repositório livre para uploads de arquivos da Fatec São Caetano
+find ways to enable competition
