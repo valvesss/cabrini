@@ -16,7 +16,8 @@ MAIN() {
 	echo " 1. Gerenciador de Disco "
 	echo " 2. Gerenciiador de Memória "
 	echo " 3. Gerenciador de Processos "
-	echo " 4. Sair. "
+	echo " 4. Créditos "
+	echo " 5. Sair. "
 	echo
 
 ## Lê a opção do usuário.
@@ -29,7 +30,8 @@ MAIN() {
 		1) gerdis ;;
 		2) germem ;;
 		3) gerpro ;;
-		4) echo "Saindo..." ; exit ;; 
+		4) creditos ;;
+		5) echo "Saindo..." ; exit ;; 
 		*) echo "Opção inválida, tente novamente." ; sleep 2 ; MAIN ;;
 	esac
 
@@ -232,24 +234,67 @@ function gerpro(){
 ## Subfunção 3 (Gerenciamento de Processos): encerrar algum processos
 
 	function subgerpro3() {
+
 	echo
 	echo "Você escolheu 'Encerrar algum processo': "
 	echo
 	read -e -p $'Deseja procurar o processo? [s/n]: ' opt
-
+	
 	if [ $opt == 's' ]; then
-		read -e -p $'Digite o nome do processo a ser procurado: ' proc
+	
+		a=0;
+		while [ $a == 0 ]; do
+	
+			## Procura o processo do usuário
+	
+			if [ $opt == 's' ]; then
+				read -e -p $'Digite o nome do processo a ser procurado: ' proc
+			fi
+		
+			## Procura o PID do processo do usuário
+
+			if top | grep $proc ; then
+
+				pidkill=$(top | grep $proc | cut -d ' ' -f7)
+
+				## Apresenta o número do processo encontrado.
+
+				echo "O número do seu processo é $pidkill."
+
+			else
+				read -e -p $'Processo não encontrado... \x0aDeseja tentar novamente? [s/n]: ' opt
+					if [ $opt == 'n' ]; then
+						let a=a+1
+
+					
+					fi
+			fi
+
+	done
+
 	fi
 
 
-## Comando
+	## Comando para encerrar processo 
 
-	echo "Nenhum programa ainda."
+	echo 
+	read -e -p $'Digite o PID do processo a ser encerrado: ' pidnum
+	kill $pidnum 2>/dev/null
+	echo "Processo $pidnum encerrado."
 
 ## Pergunta ao usuário se quer voltar ou sair.
 
 	goback
 
 	}
+function creditos() {
 
+echo Jhonny 
+echo Papa
+echo Pukas
+echo Valves
+echo Manoemano
+goback
+
+}
 MAIN
