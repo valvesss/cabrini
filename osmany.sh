@@ -136,7 +136,7 @@ function germem(){
 }
 
 ## Subfunção 1 (Gerenciamento de Memória): informações sobre memória livre
-	function subgerdis1() {
+	function subgermem1() {
 	echo
 	echo "Você escolheu 'Informações sobre memória livre': " 
 	echo
@@ -153,7 +153,7 @@ function germem(){
 
 ## Subfunção 2 (Gerenciamento de Memória): informações sobre uso da memória
 
-	function subgerdis2() {
+	function subgermem2() {
 	echo
 	echo "Você escolheu 'Informações sobre uso da memória': "
 	echo
