@@ -28,7 +28,7 @@ MAIN() {
 	case $opt in 
 		1) gerdis ;;
 		2) germem ;;
-		3) echo "3" ;;
+		3) gerpro ;;
 		4) echo "Saindo..." ; exit ;; 
 		*) echo "Opção inválida, tente novamente." ; sleep 2 ; MAIN ;;
 	esac
@@ -168,5 +168,88 @@ function germem(){
 
 	}
 
+###  Função de gerenciamento de processos  #### 
+function gerpro(){
+
+## Mensagem de apresentação.
+
+	clear
+
+	echo "Bem vindo ao Gerenciador de Memória do OSM!"
+	echo
+	echo " 1. Informações sobre os processos em tempo real"
+	echo " 2. Snapshot sobre os processos atuais"
+	echo " 3. Encerrar algum processo"
+	echo " 4. Voltar"
+	echo " 5. Sair"
+	echo
+	
+	read -e -p $'Escolha a opção desejada: ' opt
+	
+	case $opt in
+		1) subgerpro1 ;;
+		2) subgerpro2 ;;
+		3) subgerpro3 ;;
+		4) MAIN ;;
+		5) echo "Saindo..." ; exit ;;
+		*) echo "Opção inválida, tente novamente." ; sleep 2 ; gerpro ;;
+	esac
+}
+
+## Subfunção 1 (Gerenciamento de Processos): informações sobre processos em tempo real
+	function subgerpro1() {
+	echo
+	echo "Você escolheu 'Informações sobre processos em tempo real': " 
+	echo
+
+## Comando
+
+	top
+
+## Pergunta ao usuário se quer voltar ou sair.
+
+	goback
+
+	}
+
+## Subfunção 2 (Gerenciamento de Processos): snapshot sobre o uso da memória em tempo real
+
+	function subgerpro2() {
+	echo
+	echo "Você escolheu 'Snapshot dos processos atuais': "
+	echo
+
+## Comando
+
+	ps aux | more
+
+## Pergunta ao usuário se quer voltar ou sair.
+
+	goback
+
+	}
+
+## Subfunção 3 (Gerenciamento de Processos): encerrar algum processos
+
+	function subgerpro3() {
+	echo
+	echo "Você escolheu 'Encerrar algum processo': "
+	echo
+	read -e -p $'Deseja procurar o processo? [s/n]: ' opt
+
+	if [ $opt == 's' ]; then
+		read -e -p $'Digite o nome do processo a ser procurado: ' proc
+	fi
+
+
+## Comando
+
+	echo "Nenhum programa ainda."
+
+## Pergunta ao usuário se quer voltar ou sair.
+
+	goback
+
+	}
 
 MAIN
