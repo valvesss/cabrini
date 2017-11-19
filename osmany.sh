@@ -1,5 +1,19 @@
 #!/bin/bash
 
+## Descobre se é root
+
+	if [[ $EUID -eq 0 ]]; then
+		userid=0
+	else
+		userid=1
+	fi
+
+function leave(){
+	clear
+	echo "Good-Bye... "
+	exit
+}
+
 MAIN() {
 
 ## Limpa a tela 
@@ -14,7 +28,7 @@ opt=$(dialog					\
 	--menu 'Escolha a opção desejada:'	\
 	0 0 0					\
 	1 'Gerenciador de Disco'		\
-	2 'Gerenciiador de Memória'		\
+	2 'Gerenciador de Memória'		\
 	3 'Gerenciador de Processos'		\
 	4 'Créditos'				\
 	5 'Sair.')
@@ -26,7 +40,7 @@ opt=$(dialog					\
 		2) germem ;;
 		3) gerpro ;;
 		4) creditos ;;
-		5) exit ;; 
+		5) leave ;; 
 	esac
 
 }
@@ -64,7 +78,7 @@ opt=$(dialog							\
 		1) subgerdis1 ;;
 		2) subgerdis2 ;;
 		3) MAIN ;;
-		4) exit ;;
+		4) leave ;;
 	esac
 }
 ## Subfunção 1 (Gerenciamento de Disco): informações sobre espaço em disco
@@ -105,7 +119,7 @@ opt=$(dialog							\
 	case $opt in
 		1) subgermem1 ;;
 		2) MAIN ;;
-		3) exit ;;
+		3) leave ;;
 	esac
 }
 
@@ -140,20 +154,21 @@ opt=$(dialog							\
 		2) subgerpro2 ;;
 		3) subgerpro3 ;;
 		4) MAIN ;;
-		5) echo "Saindo..." ; exit ;;
+		5) leave ;;
 		*) echo "Opção inválida, tente novamente." ; sleep 2 ; gerpro ;;
 	esac
 }
 
 ## Subfunção 1 (Gerenciamento de Processos): informações sobre processos em tempo real
 	function subgerpro1() {
-	echo
-	echo "Você escolheu 'Informações sobre processos em tempo real': " 
-	echo
 
-## Comando
+## Comando que exibe processos em tempo real. Se for root, verá todos os processos, caso não seja, verá apenas os seus.
 
-	top
+	if [[ $userid -eq 0 ]]; then
+	       top	
+       	else
+	       top -u $USER
+	fi
 
 ## Pergunta ao usuário se quer voltar ou sair.
 
@@ -164,13 +179,14 @@ opt=$(dialog							\
 ## Subfunção 2 (Gerenciamento de Processos): snapshot sobre o uso da memória em tempo real
 
 	function subgerpro2() {
-	echo
-	echo "Você escolheu 'Snapshot dos processos atuais': "
-	echo
 
-## Comando
+## Comando que exibe snapshot dos processos atuais. Se o usuário for root, verá todos os processos, caso não seja, apenas verá os seus.
 
-	ps aux | more
+	if [[ $userid -eq 0 ]]; then
+		ps aux | more
+	else
+		ps -U $USER -u $USER u | more
+	fi
 
 ## Pergunta ao usuário se quer voltar ou sair.
 
@@ -178,46 +194,71 @@ opt=$(dialog							\
 
 	}
 
-## Subfunção 3 (Gerenciamento de Processos): encerrar algum processos
+## Subfunção 3 (Gerenciamento de Processos): encerrar algum processo
 
 	function subgerpro3() {
 
-	echo
-	echo "Você escolheu 'Encerrar algum processo': "
-	echo
-	read -e -p $'Deseja procurar o processo? [s/n]: ' opt
+	dialog 								\
+		--title 'IMPORTANTE'					\
+		--yesno '\nPara encerrar um processo é necessário saber seu PID.
+		\n\nDeseja procurar o processo?\n\n'			\
+		0 0
 	
-	if [ $opt == 's' ]; then
+	if [[ $? -eq 0 ]]; then
 	
 		a=0;
 		while [ $a == 0 ]; do
 	
 			## Procura o processo do usuário
 	
-			if [ $opt == 's' ]; then
-				read -e -p $'Digite o nome do processo a ser procurado: ' proc
-			fi
+			proc=$(dialog								\
+				--stdout						\
+				--title 'PID'						\
+				--inputbox 'Digite o nome do processo a ser procurado:'	\
+				0 0)
 		
-			## Procura o PID do processo do usuário
 
-			if top | grep $proc ; then
+			## Se for root
+			if [[ $userid -eq 0 ]]; then
 
-				pidkill=$(top | grep $proc | cut -d ' ' -f7)
+				## Verifica se o processo exite
+				ps aux | awk '{print $2}' > /tmp/pidstokillroot
+				pidname=$( ps aux | grep -w $proc | awk 'NR==1 {print $2}')
+				if `cat /tmp/pidstokillroot | grep -w $pidname` ; then
 
-				## Apresenta o número do processo encontrado.
-
-				echo "O número do seu processo é $pidkill."
+					dialog									\
+						--title 'NOME DO PROCESSO'					\
+						--yesno "Seu processo é esse?\n\n `ps aux | grep $proc`"	\
+						0 0
+	
+					if [[ $? -eq 0 ]]; then
+						let a=a+1
+						ps aux | grep $proc | awk '{print $2}' > /tmp/pidstokill
+					fi
+				else
+					exist=1
+				fi
 
 			else
-				read -e -p $'Processo não encontrado... \x0aDeseja tentar novamente? [s/n]: ' opt
-					if [ $opt == 'n' ]; then
+				## Se for outro usuário
+				dialog									\
+					--title 'NOME DO PROCESSO'					\
+					--yesno "Seu processo é esse?\n\n `ps aux -U $USER -u $USER u | grep $proc`"	\
+					0 0
+	
+					if [[ $? -eq 0 ]]; then
 						let a=a+1
-
-					
+						ps aux | grep $proc | awk '{print $2}' > /tmp/pidstokill
 					fi
 			fi
 
-	done
+			if [[ $exit -eq 1 ]]; then
+				dialog --title 'IMPORTANTE' --yesno 'Processo não encontrado\n\n Tentar novamente?' 0 0
+				if [[ $? -eq 1 ]]; then
+					let a=a+1
+				fi
+			fi
+		done
 
 	fi
 
