@@ -33,13 +33,15 @@ opt=$(dialog					\
 	4 'Sair.')
 
 ## Invoca a opção selecionada do usuário.
+	if [[ $? -ne 0 ]]; then
+		creditos
+	fi
 
 	case $opt in 
 		1) gerdis ;;
 		2) germem ;;
 		3) gerpro ;;
 		4) leave ;;
-		9) creditos ;; 
 	esac
 
 }
@@ -174,7 +176,10 @@ opt=$(dialog							\
 	goback
 
 	}
-
+function creditos() {
+	dialog --title 'Integrantes' --msgbox ' João Paulo\n João Ricardo\n Lucas Prudêncio\n Vitor Alves' 8 30
+goback
+}
 ## Subfunção 2 (Gerenciamento de Processos): snapshot sobre o uso da memória em tempo real
 
 	function subgerpro2() {
@@ -298,11 +303,4 @@ opt=$(dialog							\
 	goback
 
 	}
-function creditos() {
-
-	dialog --title 'Integrantes' --msgbox ' João Paulo\n João Ricardo\n Lucas Prudêncio\n Vitor Alves' 8 30
-
-goback
-
-}
 MAIN
