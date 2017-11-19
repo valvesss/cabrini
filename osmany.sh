@@ -30,8 +30,7 @@ opt=$(dialog					\
 	1 'Gerenciador de Disco'		\
 	2 'Gerenciador de Memória'		\
 	3 'Gerenciador de Processos'		\
-	4 'Créditos'				\
-	5 'Sair.')
+	4 'Sair.')
 
 ## Invoca a opção selecionada do usuário.
 
@@ -39,8 +38,8 @@ opt=$(dialog					\
 		1) gerdis ;;
 		2) germem ;;
 		3) gerpro ;;
-		4) creditos ;;
-		5) leave ;; 
+		4) leave ;;
+		9) creditos ;; 
 	esac
 
 }
@@ -201,7 +200,7 @@ opt=$(dialog							\
 	dialog 								\
 		--title 'IMPORTANTE'					\
 		--yesno '\nPara encerrar um processo é necessário saber seu PID.
-		\n\nDeseja procurar o processo?\n\n'			\
+		\n\nDeseja procurar o processo a ser encerrado?\n\n'			\
 		0 0
 	
 	if [[ $? -eq 0 ]]; then
@@ -211,65 +210,89 @@ opt=$(dialog							\
 	
 			## Procura o processo do usuário
 	
-			proc=$(dialog								\
+			proc=$(dialog							\
 				--stdout						\
 				--title 'PID'						\
 				--inputbox 'Digite o nome do processo a ser procurado:'	\
 				0 0)
-		
 
 			## Se for root
 			if [[ $userid -eq 0 ]]; then
 
-				## Verifica se o processo exite
-				ps aux | awk '{print $2}' > /tmp/pidstokillroot
-				pidname=$( ps aux | grep -w $proc | awk 'NR==1 {print $2}')
-				if `cat /tmp/pidstokillroot | grep -w $pidname` ; then
-
-					dialog									\
-						--title 'NOME DO PROCESSO'					\
-						--yesno "Seu processo é esse?\n\n `ps aux | grep $proc`"	\
-						0 0
+				## Verifica se o processo exite. Rp = root pid. Rpk = root pid kill.
+				ps aux | awk '{print $2}' > /tmp/rp
+				pidnum=$(ps aux | grep $proc | awk 'NR==1 {print $2}')
+				if `cat /tmp/rp | grep -q -w $pidnum` ; then
+					ps aux | grep $proc > /tmp/pe
+					dialog											\
+						--stdout									\
+						--title 'NOME DO PROCESSO'							\
+						--yesno "Deseja encerrar esse processo?\n\n `cat /tmp/pe | awk 'NR==1'`"	\
+						8 110
 	
 					if [[ $? -eq 0 ]]; then
 						let a=a+1
-						ps aux | grep $proc | awk '{print $2}' > /tmp/pidstokill
+						kill $pidnum &>/dev/null
+						dialog 									\
+							--stdout							\
+							--title 'FEITO'							\
+							--msgbox "Processo '$proc' de pid '$pidnum' foi encerrado."	\
+							5 60
 					fi
 				else
-					exist=1
+					exist=1	
 				fi
 
 			else
 				## Se for outro usuário
+				ps aux -U $USER -u $USER u | awk '{print $2}' > /tmp/up
+				pidnum=$(ps aux -U $USER -u $USER u | grep $proc | awk 'NR==1 {print $2}')
+				if `cat /tmp/up | grep -q -w $pidnum` ; then
+					ps aux | grep $proc > /tmp/peu
+
 				dialog									\
 					--title 'NOME DO PROCESSO'					\
-					--yesno "Seu processo é esse?\n\n `ps aux -U $USER -u $USER u | grep $proc`"	\
-					0 0
+					--yesno "Seu processo é esse?\n\n `cat /tmp/peu | awk 'NR==1'`"	\
+					8 110
 	
+
 					if [[ $? -eq 0 ]]; then
 						let a=a+1
-						ps aux | grep $proc | awk '{print $2}' > /tmp/pidstokill
+						kill $pidnum &>/dev/null
+						dialog 								\
+							--stdout						\
+							--title 'FEITO'						\
+							--msgbox "Processo $proc de pid $pidnum encerrado."	\
+							5 60
 					fi
+				else
+					exist=1
+				fi
 			fi
 
-			if [[ $exit -eq 1 ]]; then
-				dialog --title 'IMPORTANTE' --yesno 'Processo não encontrado\n\n Tentar novamente?' 0 0
+			if [[ $exist -eq 1 ]]; then
+				dialog --title 'IMPORTANTE' --yesno 'Processo não encontrado! \n\n Tentar novamente?' 0 0
 				if [[ $? -eq 1 ]]; then
 					let a=a+1
 				fi
 			fi
 		done
 
+	else
+
+		## Comando para encerrar processo
+
+		pidnum=$(dialog								\
+				--stdout						\
+				--title 'NUMERO PID'					\
+				--inputbox 'Digite o PID do processo a ser encerrado:'	\
+				0 0)
+
+		kill $pidnum 2>/dev/null
+	
+		dialog --title 'FEITO' --msgbox "Processo $pidnum encerrado." 5 60
+
 	fi
-
-
-	## Comando para encerrar processo 
-
-	echo 
-	read -e -p $'Digite o PID do processo a ser encerrado: ' pidnum
-	kill $pidnum 2>/dev/null
-	echo "Processo $pidnum encerrado."
-
 ## Pergunta ao usuário se quer voltar ou sair.
 
 	goback
@@ -277,10 +300,7 @@ opt=$(dialog							\
 	}
 function creditos() {
 
-dialog 						\
-	--title 'Integrantes'			\ 
-	--msgbox 'Jhonny Papa Pukas Valves' 	\
-	0 0
+	dialog --title 'Integrantes' --msgbox ' João Paulo\n João Ricardo\n Lucas Prudêncio\n Vitor Alves' 8 30
 
 goback
 
