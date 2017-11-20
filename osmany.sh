@@ -46,6 +46,36 @@
 	}
 
 	## Informações a serem utilizadas pelo Gerenciamento de Memória
+	function basic() {
+
+	mkdir -p /tmp/thresholds
+
+	touch /tmp/thresholds/tdis
+	echo "70" > /tmp/thresholds/tdis
+	tdispadrao=$(cat /tmp/thresholds/tdis)
+
+	touch /tmp/thresholds/tmem
+	echo "70" > /tmp/thresholds/tmem
+	tmempadrao=$(cat /tmp/thresholds/tmem)
+
+	touch /tmp/thresholds/tcpu
+	echo "70" > /tmp/thresholds/tcpu
+	tcpupadrao=$(cat /tmp/thresholds/tcpu) 
+
+	main
+	}
+
+	function disaux() { 
+
+	## Informações padrão para o disco
+
+	disuso=$(df | grep /dev/sda | awk 'NR==1 {print $5}' | tr -d '%')
+
+	}		
+
+	function memaux() {
+
+	## Informações padrão para a memória
 
 	memtotal=$(free | awk 'NR==2 {print $2}')
 	memtotal=$(($memtotal * 1024))
@@ -53,7 +83,17 @@
 	memfree=$(($memfree * 1024))
 	memused=$(($memtotal - $memfree))
 	memfinal=$(($memused * 100 / $memtotal))
-	tmempadrao=75
+
+	}
+
+	function cpuaux() {
+
+	## Informações padrão para a CPU
+
+	cpuidle=$(vmstat | awk 'NR==3 {print $15}')
+	cpuuso=$((100 - $cpuidle))
+
+	}
 
 	function main() {
 
@@ -77,9 +117,9 @@
 	## Invoca a opção selecionada do usuário.
 
 	case $opt in 
-		1) gerdis ;;
-		2) germem ;;
-		3) gercpu ;;
+		1) disaux ; gerdis ;;
+		2) memaux ; germem ;;
+		3) cpuaux ; gercpu ;;
 		4) monsis ;;
 		5) leave ;;
 		*) leave ;;
@@ -106,6 +146,16 @@
 	###  Função de gerenciamento de disco  ###
 	function gerdis() {
 	
+	## Alarme de uso de disco
+
+	if [[ $disuso -gt $tdispadrao ]]; then
+		dialog										\
+			--title 'ATENÇÃO'							\
+			--msgbox "USO DO DISCO ACIMA DO RECOMENDADO PELO ADMINISTRADOR!
+				\n\n EM USO = $disuso% \n RECOMENDADO = $tdispadrao%\n\n"	\
+			0 0
+	fi
+
 	## Mensagem de apresentação.
 
 	## Menu de Root
@@ -119,14 +169,16 @@
 			0 0 0							\
 			1 'Informações sobre espaço em disco'			\
 			2 'Informações sobre partições'				\
-			3 'Voltar'						\
-			4 'Sair')
+			3 'Definir thresholds de uso do disco'			\
+			4 'Voltar'						\
+			5 'Sair')
 	
 		case $opt in
 			1) subgerdis1 ;;
 			2) subgerdis2 ;;
-			3) main ;;
-			4) leave ;;
+			3) subgerdis3 ;;
+			4) main ;;
+			5) leave ;;
 			*) main ;;
 		esac
 
@@ -173,9 +225,46 @@
 
 	}
 
+	## Subfunção 3 (Gerenciamento de Disco): definir thresholds para disco
+
+	function subgerdis3() {
+
+	opt=$(dialog								\
+		--stdout							\
+		--title 'THRESHOLD DISCO'					\
+		--menu 'Escolha o novo valor de threshold para o disco:'	\
+		0 0 0								\
+		0 '50%'								\
+		1 '55%'								\
+		2 '60%'								\
+		3 '65%'								\
+		4 '70%'	 							\
+		5 '75%'								\
+		6 '80%'								\
+		7 '85%'								\
+		8 '90%'								\
+		9 '95%')
+
+	a=0
+	while [[ $a -lt 10 ]]; do
+		if [[ $opt -eq $a ]]; then
+			tdispadrao=$((50+$a*5))
+			let a=10
+		else
+			let a=a+1
+		fi
+	done
+
+	dialog --msgbox 'Valor de threshold atualizado!' 0 0 
+
+	gerdis
+
+	}
 	###  Função de gerenciamento de memória  #### 
 
 	function germem() {
+
+	## Alarme de uso de memória
 
 	if [[ $memfinal -gt $tmempadrao ]]; then
 		dialog										\
@@ -186,24 +275,45 @@
 	fi
 
 	## Mensagem de apresentação.
-
-	opt=$(dialog							\
-		--stdout						\
-		--title 'Bem vindo ao Gerenciador de Memória do OSM!'	\
-		--menu 'Escolha a opção desejada:'			\
-		0 0 0							\
-		1 'Informações sobre a memória'				\
-		2 'Definir threshold de uso'				\
-		3 'Voltar'						\
-		4 'Sair')
 	
-		case $opt in
-			1) subgermem1 ;;
-			2) subgermem2 ;;
-			3) main ;;
-			4) leave ;;
-			*) main ;;
-		esac
+	## Menu root
+
+	if [[ $userid -eq 0 ]]; then
+		opt=$(dialog							\
+			--stdout						\
+			--title 'Bem vindo ao Gerenciador de Memória do OSM!'	\
+			--menu 'Escolha a opção desejada:'			\
+			0 0 0							\
+			1 'Informações sobre a memória'				\
+			2 'Definir threshold de uso'				\
+			3 'Voltar'						\
+			4 'Sair')
+		
+			case $opt in
+				1) subgermem1 ;;
+				2) subgermem2 ;;
+				3) main ;;
+				4) leave ;;
+				*) main ;;
+			esac
+	else
+		opt=$(dialog							\
+			--stdout						\
+			--title 'Bem vindo ao Gerenciador de Memória do OSM!'	\
+			--menu 'Escolha a opção desejada:'			\
+			0 0 0							\
+			1 'Informações sobre a memória'				\
+			2 'Voltar'						\
+			3 'Sair')
+		
+			case $opt in
+				1) subgermem1 ;;
+				2) main ;;
+				3) leave ;;
+				*) main ;;
+			esac
+
+	fi
 	}
 
 	## Subfunção 1 (Gerenciamento de Memória): informações sobre memória livre
@@ -221,8 +331,8 @@
 
 	function subgermem2() {
 	
-	
-	dialog									\
+	opt=$(dialog								\
+		--stdout							\
 		--title 'THRESHOLD MEMÒRIA'					\
 		--menu 'Escolha o novo valor de threshold para a memória:'	\
 		0 0 0								\
@@ -230,17 +340,23 @@
 		1 '55%'								\
 		2 '60%'								\
 		3 '65%'								\
-		4 '70%' 							\
+		4 '70%'	 							\
 		5 '75%'								\
 		6 '80%'								\
 		7 '85%'								\
 		8 '90%'								\
-		9 '95%'							
+		9 '95%')
 
-	tmempadrao=$?
-	read enter
-	echo $tmempadrao
-	read enter
+	a=0
+	while [[ $a -lt 10 ]]; do
+		if [[ $opt -eq $a ]]; then
+			tmempadrao=$((50+$a*5))
+			let a=10
+		else
+			let a=a+1
+		fi
+	done
+
 	dialog --msgbox 'Valor de threshold atualizado!' 0 0 
 
 	germem
@@ -251,42 +367,74 @@
 
 	function gercpu(){
 
+	## Alarme de uso de cpu
+
+	if [[ $cpuuso -gt $tcpupadrao ]]; then
+		dialog										\
+			--title 'ATENÇÃO'							\
+			--msgbox "USO DO DISCO ACIMA DO RECOMENDADO PELO ADMINISTRADOR!
+				\n\n EM USO = $cpuuso% \n RECOMENDADO = $tcpupadrao%\n\n"	\
+			0 0
+	fi
+
 	## Mensagem de apresentação.
 
-	opt=$(dialog							\
-		--stdout						\
-		--title 'Bem vindo ao Gerenciador de CPU do OSM!'	\
-		--menu 'Escolha a opção desejada:'			\
-		0 0 0							\
-		1 'Informações sobre os processos em tempo real'	\
-		2 'Snapshot sobre os processos atuais'			\
-		3 'Encerrar algum processo'				\
-		4 'Voltar'						\
-		5 'Sair')
-	
-	case $opt in
-		1) subgercpu1 ;;
-		2) subgercpu2 ;;
-		3) subgercpu3 ;;
-		4) main ;;
-		5) leave ;;
-		*) main ;;
-	esac
+	## Menu root
+
+	if [[ $userid -eq 0 ]]; then
+		opt=$(dialog							\
+			--stdout						\
+			--title 'Bem vindo ao Gerenciador de CPU do OSM!'	\
+			--menu 'Escolha a opção desejada:'			\
+			0 0 0							\
+			1 'Informações sobre os processos em tempo real'	\
+			2 'Snapshot sobre os processos atuais'			\
+			3 'Encerrar algum processo'				\
+			4 'Definir threshold de uso da cpu'			\
+			5 'Voltar'						\
+			6 'Sair')
+		
+		case $opt in
+			1) subgercpu1 ;;
+			2) subgercpu2 ;;
+			3) subgercpu3 ;;
+			4) subgercpu4 ;;
+			5) main ;;
+			6) leave ;;
+			*) main ;;
+		esac
+	else
+		opt=$(dialog							\
+			--stdout						\
+			--title 'Bem vindo ao Gerenciador de CPU do OSM!'	\
+			--menu 'Escolha a opção desejada:'			\
+			0 0 0							\
+			1 'Informações sobre os processos em tempo real'	\
+			2 'Snapshot sobre os processos atuais'			\
+			3 'Encerrar algum processo'				\
+			4 'Voltar'						\
+			5 'Sair')
+		
+		case $opt in
+			1) subgercpu1 ;;
+			2) subgercpu2 ;;
+			3) subgercpu3 ;;
+			4) main ;;
+			5) leave ;;
+			*) main ;;
+		esac
+	fi
 	}
 
 	## Subfunção 1 (Gerenciamento de Processos): informações sobre processos em tempo real
 
 	function subgercpu1() {
 
-	## Comando que exibe processos em tempo real. Se for root, verá todos os processos, caso não seja, verá apenas os seus.
-
 	if [[ $userid -eq 0 ]]; then
 	       top	
        	else
 	       top -u $USER
 	fi
-
-	## Pergunta ao usuário se quer voltar ou sair.
 
 	gercpu
 
@@ -296,15 +444,11 @@
 
 	function subgercpu2() {
 
-	## Comando que exibe snapshot dos processos atuais. Se o usuário for root, verá todos os processos, caso não seja, apenas verá os seus.
-
 	if [[ $userid -eq 0 ]]; then
 		ps aux | more
 	else
 		ps -U $USER -u $USER u | more
 	fi
-
-	## Pergunta ao usuário se quer voltar ou sair.
 
 	gercpu
 
@@ -507,6 +651,42 @@
 
 	}
 
+	## Subfunção 4 (Gerenciamento de Processos): definir thresholds de uso da cpu
+
+	function subgercpu4() {
+
+	opt=$(dialog								\
+		--stdout							\
+		--title 'THRESHOLD CPU'						\
+		--menu 'Escolha o novo valor de threshold para a cpu:'		\
+		0 0 0								\
+		0 '50%'								\
+		1 '55%'								\
+		2 '60%'								\
+		3 '65%'								\
+		4 '70%'	 							\
+		5 '75%'								\
+		6 '80%'								\
+		7 '85%'								\
+		8 '90%'								\
+		9 '95%')
+
+	a=0
+	while [[ $a -lt 10 ]]; do
+		if [[ $opt -eq $a ]]; then
+			tcpupadrao=$((50+$a*5))
+			let a=10
+		else
+			let a=a+1
+		fi
+	done
+
+	dialog --msgbox 'Valor de threshold atualizado!' 0 0 
+
+	gercpu
+
+	}
+
 	##### Monitorar sistema #####
 
 	function monsis() {
@@ -537,4 +717,4 @@
 
 	main
 }
-main
+basic
