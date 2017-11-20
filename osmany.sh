@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## Verifica se possui as dependências necessárias
+	## Verifica se possui as dependências necessárias
 
 	a=0
 	b=0
@@ -17,7 +17,7 @@
 		fi
 
 		if [[ $b -eq 1 ]]; then
-			echo "Para executar o script é necessário instalar as dependências mostradas acima."
+			echo "Para executar o script é necessário instalar as dependências mostradas acima."--
 			read -e -p $'Deseja instalá-las? [s/n]' opt
 				if [[ $opt = 's' ]] || [[ $opt = 'S' ]]; then
 					apt install -y dialog nmon
@@ -29,7 +29,7 @@
 		let a=a+1
 	done
 
-## Descobre se é root
+	## Descobre se é root
 
 	if [[ $EUID -eq 0 ]]; then
 		userid=0
@@ -37,32 +37,44 @@
 		userid=1
 	fi
 
-function leave(){
+	function leave(){
+
 	clear
 	echo "Good-Bye... "
 	exit
-}
 
-function main() {
+	}
 
-## Limpa a tela 
+	## Informações a serem utilizadas pelo Gerenciamento de Memória
+
+	memtotal=$(free | awk 'NR==2 {print $2}')
+	memtotal=$(($memtotal * 1024))
+	memfree=$(free | awk 'NR==2 {print $4}')
+	memfree=$(($memfree * 1024))
+	memused=$(($memtotal - $memfree))
+	memfinal=$(($memused * 100 / $memtotal))
+	tmempadrao=75
+
+	function main() {
+
+	## Limpa a tela 
 
 	clear
 
-## Mensagem de apresentação do script.
+	## Mensagem de apresentação do script.
 
-opt=$(dialog					\
-	--stdout				\
-	--title 'Gerenciador de Sistema OSM'	\
-	--menu 'Escolha a opção desejada:'	\
-	0 0 0					\
-	1 'Gerenciador de Disco'		\
-	2 'Gerenciador de Memória'		\
-	3 'Gerenciador de CPU'			\
-	4 'Monitorar Sistema'			\
-	5 'Sair.')
+	opt=$(dialog					\
+		--stdout				\
+		--title 'Gerenciador de Sistema OSM'	\
+		--menu 'Escolha a opção desejada:'	\
+		0 0 0					\
+		1 'Gerenciador de Disco'		\
+		2 'Gerenciador de Memória'		\
+		3 'Gerenciador de CPU'			\
+		4 'Monitorar Sistema'			\
+		5 'Sair.')
 
-## Invoca a opção selecionada do usuário.
+	## Invoca a opção selecionada do usuário.
 
 	case $opt in 
 		1) gerdis ;;
@@ -73,10 +85,10 @@ opt=$(dialog					\
 		*) leave ;;
 	esac
 
-}
+	}
 
-## Função para facilitar retorno ao menu principal
-function goback(){
+	## Função para facilitar retorno ao menu principal
+	function goback(){
 
 
 	dialog --stdout --yesno 'Deseja retornar ao menu inicial?' 0 0
@@ -87,14 +99,14 @@ function goback(){
 		clear
 		exit
 	fi
-}
+	}
 
-##### Gerenciar sistema #####
+	##### Gerenciar sistema #####
 
-###  Função de gerenciamento de disco  ###
-function gerdis() {
-
-## Mensagem de apresentação.
+	###  Função de gerenciamento de disco  ###
+	function gerdis() {
+	
+	## Mensagem de apresentação.
 
 	## Menu de Root
 	
@@ -138,8 +150,9 @@ function gerdis() {
 		esac
 
 	fi
-}
-## Subfunção 1 (Gerenciamento de Disco): informações sobre espaço em disco
+	}
+	## Subfunção 1 (Gerenciamento de Disco): informações sobre espaço em disco
+
 	function subgerdis1() {
 
 	df -hT > /tmp/disco.txt
@@ -149,7 +162,7 @@ function gerdis() {
 
 	}
 
-## Subfunção 2 (Gerenciamento de Disco): informações sobre partições
+	## Subfunção 2 (Gerenciamento de Disco): informações sobre partições
 
 	function subgerdis2() {
 
@@ -160,29 +173,41 @@ function gerdis() {
 
 	}
 
-###  Função de gerenciamento de memória  #### 
-function germem(){
+	###  Função de gerenciamento de memória  #### 
 
-## Mensagem de apresentação.
+	function germem() {
 
-opt=$(dialog							\
-	--stdout						\
-	--title 'Bem vindo ao Gerenciador de Memória do OSM!'	\
-	--menu 'Escolha a opção desejada:'			\
-	0 0 0							\
-	1 'Informações sobre a memória'				\
-	2 'Voltar'						\
-	3 'Sair')
+	if [[ $memfinal -gt $tmempadrao ]]; then
+		dialog										\
+			--title 'ATENÇÃO'							\
+			--msgbox "USO DE RAM ACIMA DO RECOMENDADO PELO ADMINISTRADOR!
+				\n\n EM USO = $memfinal% \n RECOMENDADO = $tmempadrao%\n\n"	\
+			0 0
+	fi
+
+	## Mensagem de apresentação.
+
+	opt=$(dialog							\
+		--stdout						\
+		--title 'Bem vindo ao Gerenciador de Memória do OSM!'	\
+		--menu 'Escolha a opção desejada:'			\
+		0 0 0							\
+		1 'Informações sobre a memória'				\
+		2 'Definir threshold de uso'				\
+		3 'Voltar'						\
+		4 'Sair')
 	
-	case $opt in
-		1) subgermem1 ;;
-		2) main ;;
-		3) leave ;;
-		*) main ;;
-	esac
-}
+		case $opt in
+			1) subgermem1 ;;
+			2) subgermem2 ;;
+			3) main ;;
+			4) leave ;;
+			*) main ;;
+		esac
+	}
 
-## Subfunção 1 (Gerenciamento de Memória): informações sobre memória livre
+	## Subfunção 1 (Gerenciamento de Memória): informações sobre memória livre
+
 	function subgermem1() {
 
 	export NMON=m
@@ -192,21 +217,52 @@ opt=$(dialog							\
 
 	}
 
-###  Função de gerenciamento de processos  #### 
-function gercpu(){
+	## Subfunção 2 (Gerenciamento de Memória): definir threshold para alarmes
 
-## Mensagem de apresentação.
+	function subgermem2() {
+	
+	
+	dialog									\
+		--title 'THRESHOLD MEMÒRIA'					\
+		--menu 'Escolha o novo valor de threshold para a memória:'	\
+		0 0 0								\
+		0 '50%'								\
+		1 '55%'								\
+		2 '60%'								\
+		3 '65%'								\
+		4 '70%' 							\
+		5 '75%'								\
+		6 '80%'								\
+		7 '85%'								\
+		8 '90%'								\
+		9 '95%'							
 
-opt=$(dialog							\
-	--stdout						\
-	--title 'Bem vindo ao Gerenciador de CPU do OSM!'	\
-	--menu 'Escolha a opção desejada:'			\
-	0 0 0							\
-	1 'Informações sobre os processos em tempo real'	\
-	2 'Snapshot sobre os processos atuais'			\
-	3 'Encerrar algum processo'				\
-	4 'Voltar'						\
-	5 'Sair')
+	tmempadrao=$?
+	read enter
+	echo $tmempadrao
+	read enter
+	dialog --msgbox 'Valor de threshold atualizado!' 0 0 
+
+	germem
+
+	}
+
+	###  Função de gerenciamento de processos  #### 
+
+	function gercpu(){
+
+	## Mensagem de apresentação.
+
+	opt=$(dialog							\
+		--stdout						\
+		--title 'Bem vindo ao Gerenciador de CPU do OSM!'	\
+		--menu 'Escolha a opção desejada:'			\
+		0 0 0							\
+		1 'Informações sobre os processos em tempo real'	\
+		2 'Snapshot sobre os processos atuais'			\
+		3 'Encerrar algum processo'				\
+		4 'Voltar'						\
+		5 'Sair')
 	
 	case $opt in
 		1) subgercpu1 ;;
@@ -216,12 +272,13 @@ opt=$(dialog							\
 		5) leave ;;
 		*) main ;;
 	esac
-}
+	}
 
-## Subfunção 1 (Gerenciamento de Processos): informações sobre processos em tempo real
+	## Subfunção 1 (Gerenciamento de Processos): informações sobre processos em tempo real
+
 	function subgercpu1() {
 
-## Comando que exibe processos em tempo real. Se for root, verá todos os processos, caso não seja, verá apenas os seus.
+	## Comando que exibe processos em tempo real. Se for root, verá todos os processos, caso não seja, verá apenas os seus.
 
 	if [[ $userid -eq 0 ]]; then
 	       top	
@@ -229,16 +286,17 @@ opt=$(dialog							\
 	       top -u $USER
 	fi
 
-## Pergunta ao usuário se quer voltar ou sair.
+	## Pergunta ao usuário se quer voltar ou sair.
 
 	gercpu
 
 	}
-## Subfunção 2 (Gerenciamento de Processos): snapshot sobre o uso da memória em tempo real
+
+	## Subfunção 2 (Gerenciamento de Processos): snapshot sobre o uso da memória em tempo real
 
 	function subgercpu2() {
 
-## Comando que exibe snapshot dos processos atuais. Se o usuário for root, verá todos os processos, caso não seja, apenas verá os seus.
+	## Comando que exibe snapshot dos processos atuais. Se o usuário for root, verá todos os processos, caso não seja, apenas verá os seus.
 
 	if [[ $userid -eq 0 ]]; then
 		ps aux | more
@@ -246,13 +304,13 @@ opt=$(dialog							\
 		ps -U $USER -u $USER u | more
 	fi
 
-## Pergunta ao usuário se quer voltar ou sair.
+	## Pergunta ao usuário se quer voltar ou sair.
 
 	gercpu
 
 	}
 
-## Subfunção 3 (Gerenciamento de Processos): encerrar algum processo
+	## Subfunção 3 (Gerenciamento de Processos): encerrar algum processo
 
 	function subgercpu3() {
 
@@ -443,15 +501,15 @@ opt=$(dialog							\
 
 		fi
 
-## Pergunta ao usuário se quer voltar ou sair.
+	## Pergunta ao usuário se quer voltar ou sair.
 
 	gercpu
 
 	}
 
-##### Monitorar sistema #####
+	##### Monitorar sistema #####
 
-function monsis() {
+	function monsis() {
 
 	## Apresenta opções de monitoramento ao usuário.
 	opt=$(dialog								\
@@ -462,11 +520,16 @@ function monsis() {
 			c	'CPU'	off					\
 			d	'Disco'	off					\
 			m	'Memória'	off				\
-			n	'Rede'	off					\
-			t	'Processos' off)
+			t	'Processos' off					\
+			v	'Voltar' off					\
+			s	'Sair' off)
 
 	## Concatena as opções do usuário e executa o nmon.
-	
+
+	if [[ $opt == 'v' ]]; then main; fi
+
+	if [[ $opt == 's' ]]; then leave; fi
+
 	if [[ -n $opt ]]; then
 		export NMON="$opt"
 		nmon
