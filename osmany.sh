@@ -1,5 +1,29 @@
 #!/bin/bash
 
+## Verifica se possui as dependências necessárias
+
+	a=0
+	b=0
+	while [[ $a -eq 0 ]]; do
+		clear
+		if ! hash dialog &>/dev/null; then
+			echo "Dialog não instalado...."
+			b=1
+		fi
+
+		if ! hash nmon &>/dev/null; then
+			echo "Nmon não instalado..."
+			b=1
+		fi
+
+		if [[ $b -eq 1 ]]; then
+			echo "Para executar o script é necessário instalar as dependências mostradas acima."
+			exit
+		fi
+
+		let a=a+1
+	done
+
 ## Descobre se é root
 
 	if [[ $EUID -eq 0 ]]; then
