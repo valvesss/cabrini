@@ -218,7 +218,9 @@
 
 	function subgerdis2() {
 
-	fdisk -l > /tmp/disco1.txt
+	fdisk -l | head -n 1 > /tmp/aux1
+        fdisk -l | tail -n 6 > /tmp/aux2
+	cat /tmp/aux* >	/tmp/disco1.txt
 	dialog --title 'Informações sobre as partições' --textbox /tmp/disco1.txt 0 0\
 
 	gerdis
@@ -245,13 +247,21 @@
 		8 '90%'								\
 		9 '95%')
 
+	if [[ $? -eq 1 ]]; then
+		gerdis
+	fi
+
 	a=0
 	while [[ $a -lt 10 ]]; do
 		if [[ $opt -eq $a ]]; then
+
 			tdispadrao=$((50+$a*5))
 			let a=10
+
 		else
+
 			let a=a+1
+	
 		fi
 	done
 
@@ -347,13 +357,21 @@
 		8 '90%'								\
 		9 '95%')
 
+	if [[ $? -eq 1 ]]; then
+		germem
+	fi
+
 	a=0
 	while [[ $a -lt 10 ]]; do
 		if [[ $opt -eq $a ]]; then
+
 			tmempadrao=$((50+$a*5))
 			let a=10
+
 		else
+
 			let a=a+1
+
 		fi
 	done
 
@@ -670,14 +688,22 @@
 		7 '85%'								\
 		8 '90%'								\
 		9 '95%')
+	
+	if [[ $? -eq 1 ]]; then
+		gercpu
+	fi
 
 	a=0
 	while [[ $a -lt 10 ]]; do
 		if [[ $opt -eq $a ]]; then
+
 			tcpupadrao=$((50+$a*5))
 			let a=10
+
 		else
+
 			let a=a+1
+
 		fi
 	done
 
