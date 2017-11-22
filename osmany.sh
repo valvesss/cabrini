@@ -390,7 +390,7 @@
 	if [[ $cpuuso -gt $tcpupadrao ]]; then
 		dialog										\
 			--title 'ATENÇÃO'							\
-			--msgbox "USO DO DISCO ACIMA DO RECOMENDADO PELO ADMINISTRADOR!
+			--msgbox "USO DE CPU ACIMA DO RECOMENDADO PELO ADMINISTRADOR!
 				\n\n EM USO = $cpuuso% \n RECOMENDADO = $tcpupadrao%\n\n"	\
 			0 0
 	fi
@@ -410,8 +410,9 @@
 			3 'Encerrar algum processo'				\
 			4 'Definir threshold de uso da cpu'			\
 			5 'Alterar prioridade de processos'			\
-			6 'Voltar'						\
-			7 'Sair')
+			6 'Iniciar processo com prioridade definida'		\
+			7 'Voltar'						\
+			8 'Sair')
 		
 		case $opt in
 			1) subgercpu1 ;;
@@ -419,8 +420,9 @@
 			3) subgercpu3 ;;
 			4) subgercpu4 ;;
 			5) subgercpu5 ;;
-			6) main ;;
-			7) leave ;;
+			6) subgercpu6 ;;
+			7) main ;;
+			8) leave ;;
 			*) main ;;
 		esac
 	else
@@ -732,48 +734,31 @@
 
 	## Verifica se processo existe 
 
-	a=0
-	while [[ $a -eq 0 ]]; do
-
-		## Verifica se o processo exite. Rp = root pid. Rpk = root pid kill.
-
-		## Se for root
-		if [[ $userid -eq 0 ]]; then
-	
-	
-			ps aux | awk '{print $2}' > /tmp/rp
-
-			if `cat /tmp/rp | grep -q -w $pidnum` ; then
-				ps aux | grep $procpid > /tmp/pe
-			else
-				nonexist=1
-			fi
-
-		else
-			## Se for usuário comum
-
-			ps aux -U $USER -u $USER u | awk '{print $2}' > /tmp/up
-			pidnum=$(ps aux -U $USER -u $USER u | grep $procpid | awk 'NR==1 {print $2}')
-
-			if `cat /tmp/up | grep -q -w $pidnum` ; then
-				ps aux -U $USER -u $USER u | grep $procpid > /tmp/peu
-			else
-				nonexist=1
-			fi
-
+	## Se for root
+	nonexist=0
+	if [[ $userid -eq 0 ]]; then
+		if ! `ps aux | awk '{print $2}' | grep -q -w $pidnum` ; then
+			nonexist=1
 		fi
 
-		if [[ $nonexist -eq 1 ]]; then
-			dialog --title 'IMPORTANTE' --yesno 'Processo não encontrado! \n\n Tentar novamente?' 0 0
-			if [[ $? -eq 0 ]]; then
-				subgercpu5
-			else
-				gercpu
-			fi
-		else
-			altpri
+	else
+		## Se for usuário comum
+		if ! `ps aux -U $USER -u $USER u | awk '{print $2}' | grep -q -w $pidnum` ; then
+			nonexist=1
 		fi
-	done
+	fi
+
+	## Caso processo não exista, retorna erro
+	if [[ $nonexist -eq 1 ]]; then
+		dialog --title 'IMPORTANTE' --yesno 'Processo não encontrado! \n\n Tentar novamente?' 0 0
+		if [[ $? -eq 0 ]]; then
+			subgercpu5
+		else
+			gercpu
+		fi
+	else
+		altpri
+	fi
 
 	}
 
@@ -827,6 +812,17 @@
 		-19 '.' off								\
 		-20 'Mais Relevante' off)
 
+	## Validação aceitar/cancelar
+
+	if [[ $? -eq 1 ]]; then
+		subgercpu5
+	fi
+
+	if [[ ! -n $altnum ]] ; then
+		dialog --title 'ATENÇÃO' --infobox 'Nenhuma opção selecionada, tente novamente.' 0 0 \
+		altpri
+	fi
+
 	renice $altnum $pidnum 1> /tmp/renout
 
 	dialog --title 'SUCESSO' --textbox /tmp/renout 0 0 \
@@ -835,6 +831,106 @@
 
 	}
 
+	## Subfunção 6 (Gerenciamento de Processos): iniciar processo com prioridade específica
+
+	function subgercpu6() {
+
+	## Pergunta o nome do processo
+
+	procname=$(dialog								\
+			--stdout							\
+			--inputbox 'Digite o nome do processo que quer iniciar:' 0 0	\
+		 )
+
+	## Validação cancelar/entrar
+	if [[ $? -eq 1 ]]; then
+		gercpu
+	fi
+
+	## Validação se programa existe
+	if ! `dpkg --get-selections | grep -q $procname` ; then
+		dialog --title 'IMPORTANTE' --yesno 'Processo não encontrado! \n\n Tentar novamente?' 0 0
+	if [[ $? -eq 0 ]]; then
+			subgercpu6
+		else
+			gercpu
+		fi
+	fi
+
+
+	## Pergunta qual prioridade deve ser colocada a esse processo
+
+	altnum=$(dialog									\
+		--stdout								\
+		--title 'PRIORIDADES'							\
+		--radiolist '\nEscolha prioridade que processo irá iniciar.
+			\n\nObs: Quanto menor o número, maior será a prioridade.'	\
+			0 0 0								\
+		+19 'Menos Relevante' off 						\
+		+18 '.' off								\
+		+17 '.' off								\
+		+16 '.' off								\
+		+15 '.' off								\
+		+14 '.' off								\
+		+13 '.' off								\
+		+12 '.' off								\
+		+11 '.' off								\
+		+10 '.' off			 					\
+		+09 '.' off								\
+		+08 '.' off								\
+		+07 '.' off								\
+		+06 '.' off								\
+		+05 '.' off								\
+		+04 '.' off								\
+		+03 '.' off								\
+		+02 '.' off								\
+		+01 '.' off								\
+		+00 'Médio Relevante' off						\
+		-01 '.' off								\
+		-02 '.' off								\
+		-03 '.' off								\
+		-04 '.' off								\
+		-05 '.' off								\
+		-06 '.' off								\
+		-07 '.' off								\
+		-08 '.' off								\
+		-09 '.' off								\
+		-10 '.' off								\
+		-11 '.' off								\
+		-12 '.' off								\
+		-13 '.' off								\
+		-14 '.' off								\
+		-15 '.' off								\
+		-16 '.' off								\
+		-17 '.' off								\
+		-18 '.' off								\
+		-19 '.' off								\
+		-20 'Mais Relevante' off)
+
+	## Validação aceitar/cancelar
+
+	if [[ $? -eq 1 ]]; then
+		subgercpu6
+	fi
+
+	## Filtra resposta por + ou -
+
+	value=$(echo $altnum | grep -q + && echo + || echo -)
+	nnum=$(echo $altnum | sed 's/[^0-9]//g')
+
+	if [[ $value == '+' ]]; then
+		value=-
+	else
+		value=--
+	fi
+
+	nice $value$nnum $procname &
+	
+	dialog --stdout --title 'SUCESSO' --msgbox 'Processo iniciado com sucesso' 0 0
+	
+	gercpu
+
+	}
 	##### Monitorar sistema #####
 
 	function monsis() {
@@ -848,7 +944,6 @@
 			c	'CPU'	off					\
 			d	'Disco'	off					\
 			m	'Memória'	off				\
-			t	'Processos' off					\
 			v	'Voltar' off					\
 			s	'Sair' off)
 
