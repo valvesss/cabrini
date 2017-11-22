@@ -409,16 +409,18 @@
 			2 'Snapshot sobre os processos atuais'			\
 			3 'Encerrar algum processo'				\
 			4 'Definir threshold de uso da cpu'			\
-			5 'Voltar'						\
-			6 'Sair')
+			5 'Alterar prioridade de processos'			\
+			6 'Voltar'						\
+			7 'Sair')
 		
 		case $opt in
 			1) subgercpu1 ;;
 			2) subgercpu2 ;;
 			3) subgercpu3 ;;
 			4) subgercpu4 ;;
-			5) main ;;
-			6) leave ;;
+			5) subgercpu5 ;;
+			6) main ;;
+			7) leave ;;
 			*) main ;;
 		esac
 	else
@@ -713,6 +715,126 @@
 
 	}
 
+	## Subfunção 5 (Gerenciamento de Processos): alterar prioridade de processos
+
+	function subgercpu5() {
+
+	## Questiona o PID do processo e a nova prioridade dele
+
+	pidnum=$(dialog									\
+		--stdout								\
+		--inputbox 'Digite o PID do Processo' 0 0				\
+		)
+
+	if [[ $? -eq 1 ]]; then
+		gercpu
+	fi
+
+	## Verifica se processo existe 
+
+	a=0
+	while [[ $a -eq 0 ]]; do
+
+		## Verifica se o processo exite. Rp = root pid. Rpk = root pid kill.
+
+		## Se for root
+		if [[ $userid -eq 0 ]]; then
+	
+	
+			ps aux | awk '{print $2}' > /tmp/rp
+
+			if `cat /tmp/rp | grep -q -w $pidnum` ; then
+				ps aux | grep $procpid > /tmp/pe
+			else
+				nonexist=1
+			fi
+
+		else
+			## Se for usuário comum
+
+			ps aux -U $USER -u $USER u | awk '{print $2}' > /tmp/up
+			pidnum=$(ps aux -U $USER -u $USER u | grep $procpid | awk 'NR==1 {print $2}')
+
+			if `cat /tmp/up | grep -q -w $pidnum` ; then
+				ps aux -U $USER -u $USER u | grep $procpid > /tmp/peu
+			else
+				nonexist=1
+			fi
+
+		fi
+
+		if [[ $nonexist -eq 1 ]]; then
+			dialog --title 'IMPORTANTE' --yesno 'Processo não encontrado! \n\n Tentar novamente?' 0 0
+			if [[ $? -eq 0 ]]; then
+				subgercpu5
+			else
+				gercpu
+			fi
+		else
+			altpri
+		fi
+	done
+
+	}
+
+
+	function altpri() {
+
+	altnum=$(dialog									\
+		--stdout								\
+		--title 'PRIORIDADES'							\
+		--radiolist '\nEscolha a nova prioridade do processo.
+			\n\nObs: Quanto menor o número, maior será a prioridade.'	\
+			0 0 0								\
+		+19 'Menos Relevante' off 						\
+		+18 '.' off								\
+		+17 '.' off								\
+		+16 '.' off								\
+		+15 '.' off								\
+		+14 '.' off								\
+		+13 '.' off								\
+		+12 '.' off								\
+		+11 '.' off								\
+		+10 '.' off			 					\
+		+09 '.' off								\
+		+08 '.' off								\
+		+07 '.' off								\
+		+06 '.' off								\
+		+05 '.' off								\
+		+04 '.' off								\
+		+03 '.' off								\
+		+02 '.' off								\
+		+01 '.' off								\
+		+00 'Médio Relevante' off						\
+		-01 '.' off								\
+		-02 '.' off								\
+		-03 '.' off								\
+		-04 '.' off								\
+		-05 '.' off								\
+		-06 '.' off								\
+		-07 '.' off								\
+		-08 '.' off								\
+		-09 '.' off								\
+		-10 '.' off								\
+		-11 '.' off								\
+		-12 '.' off								\
+		-13 '.' off								\
+		-14 '.' off								\
+		-15 '.' off								\
+		-16 '.' off								\
+		-17 '.' off								\
+		-18 '.' off								\
+		-19 '.' off								\
+		-20 'Mais Relevante' off)
+
+	renice $altnum $pidnum 1> /tmp/renout
+
+	dialog --title 'SUCESSO' --textbox /tmp/renout 0 0 \
+	
+	gercpu
+
+	}
+
 	##### Monitorar sistema #####
 
 	function monsis() {
@@ -732,6 +854,7 @@
 
 	## Concatena as opções do usuário e executa o nmon.
 
+	#if [[ -n $opt == 'v'  ]]; then main; fi
 	if [[ $opt == 'v' ]]; then main; fi
 
 	if [[ $opt == 's' ]]; then leave; fi
