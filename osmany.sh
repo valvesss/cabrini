@@ -531,6 +531,7 @@
 	}
 
 	function propro2() {
+
 		procpid=$(dialog							\
 				--stdout						\
 				--title 'PID'						\
@@ -545,6 +546,7 @@
 	}
 
 	function exipro1(){
+
 		a=0
 		nonexist=0
 		while [[ $a -eq 0 ]]; do
@@ -557,7 +559,8 @@
 				if `ps aux | awk '{print $11}' | grep -q $procname` ; then
 				
 					ps aux | grep $procname > /tmp/pe
-					pidnum=$(ps aux | grep $procname | awk 'NR==1 {print $2}')
+					pidnum1=$(ps aux | grep $procname | awk 'NR==1 {print $2}')
+					pidnum2=$(ps aux | grep $procname | awk 'NR==2 {print $2}')
 
 				else
 					nonexist=1
@@ -569,7 +572,8 @@
 				if `ps aux -U $USER -u $USER u | awk '{print $11}' | grep -q $procname` ; then
 
 					ps aux -U $USER -u $USER u | grep $procname > /tmp/peu
-					pidnum=$(ps aux -U $USER -u $USER u | grep $procname | awk 'NR==1 {print $2}')
+					pidnum1=$(ps aux -U $USER -u $USER u | grep $procname | awk 'NR==1 {print $2}')
+					pidnum2=$(ps aux -U $USER -u $USER u | grep $procname | awk 'NR==2 {print $2}')
 
 				else
 					nonexist=1
@@ -605,9 +609,9 @@
 		if [[ $userid -eq 0 ]]; then
 	
 
-			if `ps aux | awk '{print $2}' | grep $procpid` ; then
-
-				pidnum=$(ps aux | grep $procpid | awk 'NR==1 {print $2}')
+			if `ps aux | awk '{print $2}' | grep -q $procpid` ; then
+				
+				pidnum1=$(ps aux | grep $procpid | awk 'NR==1 {print $2}')
 				ps aux | grep $procpid > /tmp/pe
 
 			else
@@ -621,7 +625,7 @@
 			
 			if `ps aux -U $USER -u $USER u | awk '{print $2}' | grep $procpid` ; then
 
-				pidnum=$(ps aux -U $USER -u $USER u | grep $procpid | awk 'NR==1 {print $2}')
+				pidnum1=$(ps aux -U $USER -u $USER u | grep $procpid | awk 'NR==1 {print $2}')
 				ps aux -U $USER -u $USER u | grep $procpid > /tmp/peu
 
 			else
@@ -640,6 +644,7 @@
 				gercpu
 			fi
 		else
+			procname=$(ps aux | grep -q -w $procpid | awk '{print $11}')
 			killpro
 		fi
 	done
@@ -662,11 +667,12 @@
 					let a=a+1
 
 					## Encerra processo
-					killall $pidnum &>/dev/null
+					kill $pidnum1 &>/dev/null
+					kill $pidnum2 &>/dev/null
 					dialog 									\
 						--stdout							\
 						--title 'FEITO'							\
-						--msgbox "Processo '$procname' de pid '$pidnum' foi encerrado."	\
+						--msgbox "Processo de pid '$pidnum1' foi encerrado."	\
 						5 60
 				else
 					subgercpu3
@@ -674,16 +680,17 @@
 
 		else
 			## Se for outro usuário
-			dialog									\
-				--title 'NOME DO PROCESSO'					\
-				--yesno "Seu processo é esse?\n\n `cat /tmp/peu | awk 'NR==1'`"	\
+			dialog											\
+				--title 'NOME DO PROCESSO'							\
+				--yesno "Deseja encerrar esse processo??\n\n `cat /tmp/peu | awk 'NR==1'`"	\
 				8 110
 	
 				if [[ $? -eq 0 ]]; then
 					let a=a+1
 
 					## Encerra processo
-					killall $pidnum &>/dev/null
+					kill $pidnum1 &>/dev/null
+					kill $pidnum2 &>/dev/null
 					dialog 								\
 						--stdout						\
 						--title 'FEITO'						\
