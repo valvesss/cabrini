@@ -1,5 +1,4 @@
 #!/bin/bash
-
 	## Verifica se possui as dependências necessárias
 
 	a=0
