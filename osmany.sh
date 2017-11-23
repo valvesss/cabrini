@@ -37,6 +37,8 @@
 		userid=1
 	fi
 
+	## Comando de saída padrão 
+
 	function leave(){
 
 	clear
@@ -48,6 +50,7 @@
 	## Informações a serem utilizadas pelo Gerenciamento de Memória
 	function basic() {
 
+	## Cria pastas para definição dos thresholds
 	mkdir -p /tmp/thresholds
 
 	touch /tmp/thresholds/tdis
@@ -63,19 +66,19 @@
 	tcpupadrao=$(cat /tmp/thresholds/tcpu) 
 
 	main
-	}
-
-	function disaux() { 
+}
 
 	## Informações padrão para o disco
+
+	function disaux() { 
 
 	disuso=$(df | grep /dev/sda | awk 'NR==1 {print $5}' | tr -d '%')
 
 	}		
 
-	function memaux() {
-
 	## Informações padrão para a memória
+
+	function memaux() {
 
 	memtotal=$(free | awk 'NR==2 {print $2}')
 	memtotal=$(($memtotal * 1024))
@@ -86,14 +89,16 @@
 
 	}
 
-	function cpuaux() {
-
 	## Informações padrão para a CPU
+
+	function cpuaux() {
 
 	cpuidle=$(vmstat | awk 'NR==3 {print $15}')
 	cpuuso=$((100 - $cpuidle))
 
 	}
+
+	## Função principal do programa
 
 	function main() {
 
@@ -108,10 +113,10 @@
 		--title 'Gerenciador de Sistema OSM'	\
 		--menu 'Escolha a opção desejada:'	\
 		0 0 0					\
-		1 'Gerenciador de Disco'		\
-		2 'Gerenciador de Memória'		\
-		3 'Gerenciador de CPU'			\
-		4 'Monitorar Sistema'			\
+		1 'Gerenciador de Disco.'		\
+		2 'Gerenciador de Memória.'		\
+		3 'Gerenciador de CPU.'			\
+		4 'Monitorar Sistema.'			\
 		5 'Sair.')
 
 	## Invoca a opção selecionada do usuário.
@@ -128,6 +133,7 @@
 	}
 
 	## Função para facilitar retorno ao menu principal
+
 	function goback(){
 
 
@@ -141,9 +147,9 @@
 	fi
 	}
 
-	##### Gerenciar sistema #####
+	################## Gerenciar sistema ##############################
 
-	###  Função de gerenciamento de disco  ###
+	##########  Função de gerenciamento de disco  ##########
 	function gerdis() {
 	
 	## Alarme de uso de disco
@@ -270,7 +276,8 @@
 	gerdis
 
 	}
-	###  Função de gerenciamento de memória  #### 
+
+	######################  Função de gerenciamento de memória  #########################3
 
 	function germem() {
 
@@ -330,9 +337,9 @@
 
 	function subgermem1() {
 
-	export NMON=m
-	nmon
-
+	free -h > farq
+	dialog --title 'INFORMAÇÕES SOBRE MEMÓRIA' --textbox farq 0 0
+	rm -rf farq
 	germem
 
 	}
@@ -381,7 +388,7 @@
 
 	}
 
-	###  Função de gerenciamento de processos  #### 
+	#####################  Função de gerenciamento de processos  ####################### 
 
 	function gercpu(){
 
@@ -467,7 +474,13 @@
 	function subgercpu2() {
 
 	if [[ $userid -eq 0 ]]; then
-		ps aux | more
+
+		ps aux | sort -k 3 -r | tr -s " "  | cut -d ' ' -f1,2,11 | column -t > /tmp/subg2
+		dialog 							\
+			--title 'SNAPSHOT' 				\
+			--textbox /tmp/subg2				\
+			0 0
+
 	else
 		ps -U $USER -u $USER u | more
 	fi
@@ -481,6 +494,7 @@
 	function subgercpu3() {
 
 	dialog										\
+		--stdout								\
 		--title 'IMPORTANTE'							\
 		--yesno '\nPara encerrar um processo é necessário saber seu PID.	
 			\n\nCaso não saiba o PID do processo que deseja encerrar	
@@ -508,12 +522,12 @@
 				--title 'PID'						\
 				--inputbox 'Digite o nome do processo a ser procurado:'	\
 				0 0)
-
+		
 		if [[ $? -eq 1 ]]; then
 			gercpu
+		else
+			exipro1
 		fi
-
-		exipro1
 	}
 
 	function propro2() {
@@ -532,6 +546,7 @@
 
 	function exipro1(){
 		a=0
+		nonexist=0
 		while [[ $a -eq 0 ]]; do
 
 			## Verifica se o processo exite. Rp = root pid. Rpk = root pid kill.
@@ -539,24 +554,23 @@
 			## Se for root
 			if [[ $userid -eq 0 ]]; then
 	
-	
-				ps aux | awk '{print $2}' > /tmp/rp
-				pidnum=$(ps aux | grep $procname | awk 'NR==1 {print $2}')
-
-				if `cat /tmp/rp | grep -q -w $pidnum` ; then
+				if `ps aux | awk '{print $11}' | grep -q $procname` ; then
+				
 					ps aux | grep $procname > /tmp/pe
+					pidnum=$(ps aux | grep $procname | awk 'NR==1 {print $2}')
+
 				else
 					nonexist=1
 				fi
 
 			else
-			## Se for usuário comum
 
-				ps aux -U $USER -u $USER u | awk '{print $2}' > /tmp/up
-				pidnum=$(ps aux -U $USER -u $USER u | grep $procname | awk 'NR==1 {print $2}')
+				## Se for usuário comum
+				if `ps aux -U $USER -u $USER u | awk '{print $11}' | grep -q $procname` ; then
 
-				if `cat /tmp/up | grep -q -w $pidnum` ; then
 					ps aux -U $USER -u $USER u | grep $procname > /tmp/peu
+					pidnum=$(ps aux -U $USER -u $USER u | grep $procname | awk 'NR==1 {print $2}')
+
 				else
 					nonexist=1
 				fi
@@ -564,7 +578,9 @@
 			fi
 
 			if [[ $nonexist -eq 1 ]]; then
+
 				dialog --title 'IMPORTANTE' --yesno 'Processo não encontrado! \n\n Tentar novamente?' 0 0
+
 				if [[ $? -eq 0 ]]; then
 					propro1
 				else
@@ -574,10 +590,13 @@
 				killpro
 			fi
 		done
+	
 	}
+
 	function exipro2 () {
 
 	a=0
+	nonexist=0
 	while [[ $a -eq 0 ]]; do
 
 		## Verifica se o processo exite. Rp = root pid. Rpk = root pid kill.
@@ -585,26 +604,30 @@
 		## Se for root
 		if [[ $userid -eq 0 ]]; then
 	
-	
-			ps aux | awk '{print $2}' > /tmp/rp
-			pidnum=$(ps aux | grep $procpid | awk 'NR==1 {print $2}')
 
-			if `cat /tmp/rp | grep -q -w $pidnum` ; then
+			if `ps aux | awk '{print $2}' | grep $procpid` ; then
+
+				pidnum=$(ps aux | grep $procpid | awk 'NR==1 {print $2}')
 				ps aux | grep $procpid > /tmp/pe
+
 			else
+
 				nonexist=1
+
 			fi
 
 		else
 			## Se for usuário comum
+			
+			if `ps aux -U $USER -u $USER u | awk '{print $2}' | grep $procpid` ; then
 
-			ps aux -U $USER -u $USER u | awk '{print $2}' > /tmp/up
-			pidnum=$(ps aux -U $USER -u $USER u | grep $procpid | awk 'NR==1 {print $2}')
-
-			if `cat /tmp/up | grep -q -w $pidnum` ; then
+				pidnum=$(ps aux -U $USER -u $USER u | grep $procpid | awk 'NR==1 {print $2}')
 				ps aux -U $USER -u $USER u | grep $procpid > /tmp/peu
+
 			else
+
 				nonexist=1
+
 			fi
 
 		fi
@@ -622,6 +645,7 @@
 	done
 	
 	}
+
 	function killpro() {	
 
 		## Se for root
@@ -636,14 +660,16 @@
 	
 				if [[ $? -eq 0 ]]; then
 					let a=a+1
-					kill $pidnum &>/dev/null
+
+					## Encerra processo
+					kill -9 $pidnum &>/dev/null
 					dialog 									\
 						--stdout							\
 						--title 'FEITO'							\
 						--msgbox "Processo '$procname' de pid '$pidnum' foi encerrado."	\
 						5 60
 				else
-					gercpu
+					subgercpu3
 				fi
 
 		else
@@ -655,7 +681,9 @@
 	
 				if [[ $? -eq 0 ]]; then
 					let a=a+1
-					kill $pidnum &>/dev/null
+
+					## Encerra processo
+					kill -9 $pidnum &>/dev/null
 					dialog 								\
 						--stdout						\
 						--title 'FEITO'						\
@@ -667,8 +695,7 @@
 
 		fi
 
-	## Pergunta ao usuário se quer voltar ou sair.
-
+	## Retorna ao menu de cpu
 	gercpu
 
 	}
@@ -697,6 +724,7 @@
 		gercpu
 	fi
 
+	## Redefine variável de threshold de cpu padrão
 	a=0
 	while [[ $a -lt 10 ]]; do
 		if [[ $opt -eq $a ]]; then
@@ -711,8 +739,10 @@
 		fi
 	done
 
+	## Mensagem de atualização de threshold
 	dialog --msgbox 'Valor de threshold atualizado!' 0 0 
 
+	## Retorna ao menu de cpu
 	gercpu
 
 	}
@@ -823,10 +853,13 @@
 		altpri
 	fi
 
+	## Altera prioridade do processo
 	renice $altnum $pidnum 1> /tmp/renout
 
+	## Mensagem de sucesso
 	dialog --title 'SUCESSO' --textbox /tmp/renout 0 0 \
 	
+	## Retorna ao menu de cpu
 	gercpu
 
 	}
@@ -924,10 +957,13 @@
 		value=--
 	fi
 
+	## Inicia programa com prioridade pré-definida
 	nice $value$nnum $procname &
 	
+	## Mensagem de sucesso
 	dialog --stdout --title 'SUCESSO' --msgbox 'Processo iniciado com sucesso' 0 0
 	
+	## Retorna ao menu de cpu
 	gercpu
 
 	}
@@ -936,6 +972,7 @@
 	function monsis() {
 
 	## Apresenta opções de monitoramento ao usuário.
+
 	opt=$(dialog								\
 			--stdout						\
 			--title 'MONITORAR SISTEMA'				\
@@ -949,7 +986,6 @@
 
 	## Concatena as opções do usuário e executa o nmon.
 
-	#if [[ -n $opt == 'v'  ]]; then main; fi
 	if [[ $opt == 'v' ]]; then main; fi
 
 	if [[ $opt == 's' ]]; then leave; fi
