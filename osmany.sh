@@ -1,4 +1,5 @@
 #!/bin/bash
+
 	## Verifica se possui as dependências necessárias
 
 	a=0
@@ -598,7 +599,7 @@
 	nonexist=0
 	while [[ $a -eq 0 ]]; do
 
-		## Verifica se o processo exite. Rp = root pid. Rpk = root pid kill.
+		## Verifica se o processo existe. Rp = root pid. Rpk = root pid kill.
 
 		## Se for root
 		if [[ $userid -eq 0 ]]; then
@@ -661,7 +662,7 @@
 					let a=a+1
 
 					## Encerra processo
-					kill -9 $pidnum &>/dev/null
+					killall $pidnum &>/dev/null
 					dialog 									\
 						--stdout							\
 						--title 'FEITO'							\
@@ -682,7 +683,7 @@
 					let a=a+1
 
 					## Encerra processo
-					kill -9 $pidnum &>/dev/null
+					killall $pidnum &>/dev/null
 					dialog 								\
 						--stdout						\
 						--title 'FEITO'						\
@@ -841,16 +842,17 @@
 		-19 '.' off								\
 		-20 'Mais Relevante' off)
 
-	## Validação aceitar/cancelar
+	## Validação caso nada seja selecionado
+	if [[ ! -n $altnum ]] ; then
+		dialog --stdout --title 'ATENÇÃO' --msgbox 'Nenhuma opção selecionada, tente novamente.' 0 0
+		altpri
+	fi
 
+	## Validação aceitar/cancelar
 	if [[ $? -eq 1 ]]; then
 		subgercpu5
 	fi
 
-	if [[ ! -n $altnum ]] ; then
-		dialog --title 'ATENÇÃO' --infobox 'Nenhuma opção selecionada, tente novamente.' 0 0 \
-		altpri
-	fi
 
 	## Altera prioridade do processo
 	renice $altnum $pidnum 1> /tmp/renout
@@ -889,6 +891,12 @@
 		fi
 	fi
 
+	sgc6alt
+
+	}
+
+
+	function sgc6alt() {
 
 	## Pergunta qual prioridade deve ser colocada a esse processo
 
@@ -938,6 +946,12 @@
 		-18 '.' off								\
 		-19 '.' off								\
 		-20 'Mais Relevante' off)
+
+	## Validação caso nada seja selecionado
+	if [[ ! -n $altnum ]] ; then
+		dialog --stdout --title 'ATENÇÃO' --msgbox 'Nenhuma opção selecionada, tente novamente.' 0 0
+		sgc6alt
+	fi
 
 	## Validação aceitar/cancelar
 
