@@ -203,7 +203,7 @@ fi
 
 if [[ $userid -eq 0 ]]; then
 
-	opt=$(dialog							\
+	opt=$(dialog						\
 	--stdout						\
 	--title 'Bem vindo ao Gerenciador de Disco do OSM!'	\
 	--menu 'Escolha a opção desejada:'			\
@@ -229,7 +229,7 @@ else
 
 ## Menu usuário comum
 
-	opt=$(dialog							\
+	opt=$(dialog						\
 	--stdout						\
 	--title 'Bem vindo ao Gerenciador de Disco do OSM!'	\
 	--menu 'Escolha a opção desejada:'			\
@@ -278,7 +278,7 @@ gerdis
 
 function subgerdis3() {
 
-	opt=$(dialog								\
+	opt=$(dialog							\
 	--stdout							\
 	--title 'THRESHOLD DISCO'					\
 	--menu 'Escolha o novo valor de threshold para o disco:'	\
@@ -328,8 +328,8 @@ function germem() {
 
 if [[ $memfinal -gt $tmempadrao ]]; then
 
-	dialog										\
-	--title 'ATENÇÃO'							\
+	dialog								\
+	--title 'ATENÇÃO'						\
 	--msgbox "USO DE RAM ACIMA DO RECOMENDADO PELO ADMINISTRADOR!
 	\n\n EM USO = $memfinal% \n RECOMENDADO = $tmempadrao%\n\n"	\
 	0 0
@@ -341,7 +341,7 @@ fi
 
 if [[ $userid -eq 0 ]]; then
 
-	opt=$(dialog							\
+	opt=$(dialog						\
 	--stdout						\
 	--title 'Bem vindo ao Gerenciador de Memória do OSM!'	\
 	--menu 'Escolha a opção desejada:'			\
@@ -362,7 +362,7 @@ if [[ $userid -eq 0 ]]; then
 	esac
 else
 
-	opt=$(dialog							\
+	opt=$(dialog						\
 	--stdout						\
 	--title 'Bem vindo ao Gerenciador de Memória do OSM!'	\
 	--menu 'Escolha a opção desejada:'			\
@@ -398,7 +398,7 @@ germem
 
 function subgermem2() {
 
-	opt=$(dialog								\
+	opt=$(dialog							\
 	--stdout							\
 	--title 'THRESHOLD MEMÒRIA'					\
 	--menu 'Escolha o novo valor de threshold para a memória:'	\
@@ -448,8 +448,8 @@ function gercpu(){
 
 if [[ $cpuuso -gt $tcpupadrao ]]; then
 
-	dialog										\
-	--title 'ATENÇÃO'							\
+	dialog								\
+	--title 'ATENÇÃO'						\
 	--msgbox "USO DE CPU ACIMA DO RECOMENDADO PELO ADMINISTRADOR!
 	\n\n EM USO = $cpuuso% \n RECOMENDADO = $tcpupadrao%\n\n"	\
 	0 0
@@ -461,7 +461,7 @@ fi
 
 if [[ $userid -eq 0 ]]; then
 
-	opt=$(dialog							\
+	opt=$(dialog						\
 	--stdout						\
 	--title 'Bem vindo ao Gerenciador de CPU do OSM!'	\
 	--menu 'Escolha a opção desejada:'			\
@@ -490,7 +490,7 @@ if [[ $userid -eq 0 ]]; then
 	esac
 else
 
-	opt=$(dialog							\
+	opt=$(dialog						\
 	--stdout						\
 	--title 'Bem vindo ao Gerenciador de CPU do OSM!'	\
 	--menu 'Escolha a opção desejada:'			\
@@ -566,7 +566,7 @@ function subgercpu3() {
 	--yesno '\nPara encerrar um processo é necessário saber seu PID.	
 	\n\nCaso não saiba o PID do processo que deseja encerrar	
 	\né possível buscá-lo pelo nome.
-	\n\nDeseja procurar seu PID pelo nome?\n\n'			\
+	\n\nDeseja procurar seu PID pelo nome?\n\n'				\
 	0 0
 
 ## Procura o processo do usuário
@@ -585,7 +585,7 @@ fi
 
 function propro1() {
 
-	procname=$(dialog							\
+	procname=$(dialog					\
 	--stdout						\
 	--title 'PID'						\
 	--inputbox 'Digite o nome do processo a ser procurado:'	\
@@ -604,7 +604,7 @@ fi
 
 function propro2() {
 
-	procpid=$(dialog							\
+	procpid=$(dialog					\
 	--stdout						\
 	--title 'PID'						\
 	--inputbox 'Digite o PID do processo a ser encerrado:'	\
@@ -760,9 +760,9 @@ if [[ $userid -eq 0 ]]; then
 		## Encerra processo
 		kill $pidnum1 &>/dev/null
 		kill $pidnum2 &>/dev/null
-		dialog 									\
-		--stdout							\
-		--title 'FEITO'							\
+		dialog 							\
+		--stdout						\
+		--title 'FEITO'						\
 		--msgbox "Processo de pid '$pidnum1' foi encerrado."	\
 		5 60
 
@@ -775,7 +775,7 @@ else
 
 ## Se for outro usuário
 
-	dialog											\
+	dialog										\
 	--title 'NOME DO PROCESSO'							\
 	--yesno "Deseja encerrar esse processo??\n\n `cat /tmp/peu | awk 'NR==1'`"	\
 	8 110
@@ -787,7 +787,7 @@ else
 		## Encerra processo
 		kill $pidnum1 &>/dev/null
 		kill $pidnum2 &>/dev/null
-		dialog 								\
+		dialog 							\
 		--stdout						\
 		--title 'FEITO'						\
 		--msgbox "Processo de pid '$pidnum1' encerrado."	\
@@ -810,7 +810,7 @@ gercpu
 
 function subgercpu4() {
 
-	opt=$(dialog								\
+	opt=$(dialog							\
 	--stdout							\
 	--title 'THRESHOLD CPU'						\
 	--menu 'Escolha o novo valor de threshold para a cpu:'		\
@@ -863,7 +863,7 @@ function subgercpu5() {
 
 ## Questiona o PID do processo e a nova prioridade dele
 
-	pidnum=$(dialog									\
+	pidnum=$(dialog								\
 	--stdout								\
 	--inputbox 'Digite o PID do Processo' 0 0				\
 	)
@@ -1133,10 +1133,11 @@ function monsis() {
 
 ## Apresenta opções de monitoramento ao usuário.
 
-	opt=$(dialog								\
+	opt=$(dialog						\
 	--stdout						\
 	--title 'MONITORAR SISTEMA'				\
-	--checklist 'Digite as opções a serem monitoradas:'	\
+	--checklist 'Digite as opções a serem monitoradas:
+		\n\nOBS: aperta a letra "q" para sair do nmon.'	\
 	0 0 0							\
 	c	'CPU'	off					\
 	d	'Disco'	off					\
