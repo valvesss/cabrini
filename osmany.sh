@@ -6,18 +6,21 @@ a=0
 b=0
 while [[ $a -eq 0 ]]; do
 
-	clear
+	#clear
 
 	if ! hash dialog &>/dev/null; then
 
 		echo "Dialog não instalado...."
 		b=1
+		pn1='dialog'
+
 	fi
 
 	if ! hash nmon &>/dev/null; then
 
 		echo "Nmon não instalado..."
 		b=1
+		pn2=nmon
 	fi
 
 	if [[ $b -eq 1 ]]; then
@@ -32,13 +35,20 @@ while [[ $a -eq 0 ]]; do
 				apt install -y dialog nmon
 				./osmany.sh
 			else
+				if ! sudo apt install -y dialog nmon &>/dev/null ; then
+					
+					echo "Usuário não possui direitos administrativos."
+					echo "Entre como root e digite 'apt -y install $pn1 $pn2'"
 
-				sudo apt install -y dialog nmon
-				./osmany.sh
+				else
+
+					sudo apt install -y dialog nmon 
+
+				fi
 			fi
 		fi
 
-		exit
+			exit
 
 		fi
 
@@ -780,7 +790,7 @@ else
 		dialog 								\
 		--stdout						\
 		--title 'FEITO'						\
-		--msgbox "Processo '$procname' de pid '$pidnum' encerrado."	\
+		--msgbox "Processo de pid '$pidnum1' encerrado."	\
 		5 60
 
 	else
